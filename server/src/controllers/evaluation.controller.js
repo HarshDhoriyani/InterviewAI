@@ -5,7 +5,7 @@ const { runJavaScript } = require("../services/codeExecution.service");
 const { analyzeComplexity } = require("../utils/complexityAnalyzer");
 const { analyzeCodeQuality } = require("../utils/codeQualityAnalyzer");
 const { analyzeEdgeCases } = require("../utils/edgeCaseAnalyzer");
-
+const { updatePerformance } = require("../services/analytics.service");
 
 
 
@@ -82,6 +82,13 @@ exports.submitCode = async (req, res) => {
     session.score = totalScore;
     session.completedAt = new Date();
     await session.save();
+
+    await updatePerformance(
+      req.user._id,
+      question,
+      totalScore
+    );
+
 
     res.status(200).json({
       evaluation,
