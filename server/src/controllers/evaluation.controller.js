@@ -6,12 +6,22 @@ const { analyzeComplexity } = require("../utils/complexityAnalyzer");
 const { analyzeCodeQuality } = require("../utils/codeQualityAnalyzer");
 const { analyzeEdgeCases } = require("../utils/edgeCaseAnalyzer");
 const { updatePerformance } = require("../services/analytics.service");
+const { executeCode } = require("../services/executionManager.service");
 
 
 
 exports.submitCode = async (req, res) => {
   try {
     const { sessionId, code, language } = req.body;
+
+    if (code.length > 10000) {
+      return res.status(400).json({ message: "Code too long" });
+    }
+
+    const allowedLanguages = ["javascript", "python"];
+    if (!allowedLanguages.includes(language)) {
+      return res.status(400).json({ message: "Unsupported language" });
+    }
 
     const session = await Session.findById(sessionId).populate("question");
 
@@ -24,11 +34,12 @@ exports.submitCode = async (req, res) => {
     const functionName = question.starterCode
       .match(/function\s+([a-zA-Z0-9_]+)/)[1];
 
-    const executionResult = runJavaScript(
+    const executionResult = await executeCode({
       code,
+      language,
       functionName,
-      question.testCases
-    );
+      testCases: question.testCases,
+    });
 
     if (executionResult.error) {
       return res.status(400).json({
