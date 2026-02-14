@@ -28,6 +28,12 @@ const sessionSchema = new mongoose.Schema(
     completedAt: {
       type: Date,
     },
+    difficulty: {
+      type: String,
+    },
+    topic: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

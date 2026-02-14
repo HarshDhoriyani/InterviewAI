@@ -16,6 +16,8 @@ exports.startInterview = async (req, res) => {
     const session = await Session.create({
       user: req.user._id,
       question: question._id,
+      difficulty: question.difficulty,
+      topic: question.topic,
     });
 
     res.status(200).json({

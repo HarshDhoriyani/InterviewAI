@@ -16,6 +16,12 @@ const updatePerformance = async (userId, question, totalScore) => {
     ((performance.averageScore * (performance.totalInterviews - 1)) + totalScore) /
     performance.totalInterviews;
 
+  performance.confidenceScore = 
+    performance.averageScore > 80 ? 90 :
+    performance.averageScore > 60 ? 70 :
+    performance.averageScore > 40 ? 50 :
+    30;
+
   // Update topic stats
   const topicEntry = performance.topicStats.find(
     (t) => t.topic === question.topic

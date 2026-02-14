@@ -30,6 +30,10 @@ const performanceSchema = new mongoose.Schema(
         attempts: Number,
       },
     ],
+    confidenceScore: {
+      type: Number,
+      default: 50,
+    },
   },
   { timestamps: true }
 );

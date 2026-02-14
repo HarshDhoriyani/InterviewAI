@@ -8,7 +8,13 @@ exports.getAnalytics = async (req, res) => {
       return res.status(404).json({ message: "No performance data yet." });
     }
 
-    res.status(200).json(performance);
+    const readinessScore = (performance.averageScore * 0.7) + (performance.confidenceScore * 0.3);
+
+    res.status(200).json({
+      ...performance.toObject(),
+      readinessScore
+    });
+    
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
