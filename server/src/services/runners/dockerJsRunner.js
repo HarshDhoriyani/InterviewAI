@@ -1,6 +1,6 @@
 const vm = require("vm");
 
-const runJavaScript = async (userCode, functionName, testCases) => {
+const runJavaScriptDocker = async (userCode, functionName, testCases) => {
     let passed = 0;
     let results = [];
 
@@ -44,4 +44,4 @@ const runJavaScript = async (userCode, functionName, testCases) => {
 };
 
 
-module.exports = { runJavaScript };
+module.exports = { runJavaScriptDocker };

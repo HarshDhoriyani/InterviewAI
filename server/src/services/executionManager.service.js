@@ -1,14 +1,14 @@
-const { runJavaScript } = require("./runners/jsRunner");
-const { runPython } = require("./runners/pythonRunner");
+const { runJavaScriptDocker } = require("./runners/dockerJsRunner");
+const { runPythonDocker } = require("./runners/dockerPyRunner");
 
 
 const executeCode = async ({ code, language, functionName, testCases }) => {
     switch (language) {
         case "javascript":
-            return await runJavaScript(code, functionName, testCases);
+            return await runJavaScriptDocker(code, functionName, testCases);
 
         case "python":
-            return await runPython(code, functionName, testCases);
+            return await runPythonDocker(code, functionName, testCases);
 
         default:
             return {
