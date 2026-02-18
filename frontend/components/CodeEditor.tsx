@@ -1,21 +1,34 @@
 "use client";
 import { Editor } from "@monaco-editor/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { api } from "@/services/api";
 
-interface CodeEditorProps {
-    onSubmit: (code: string) => Promise<void>;
-}
-
-export default function CodeEditor({ onSubmit }: CodeEditorProps) {
+export default function CodeEditor({ onSubmit, sessionId }: any) {
     const [code, setCode] = useState("");
+    const token = localStorage.getItem("token") || "";
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (code.trim()) {
+                api(
+                    "/snapshot",
+                    "POST",
+                    { sessionId, code },
+                    token
+                );
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [code]);
 
     return (
         <div>
             <Editor 
-            height="400px"
-            defaultLanguage="javascript"
-            value={code}
-            onChange={(value) => setCode(value || "")}
+                height="400px"
+                defaultLanguage="javascript"
+                value={code}
+                onChange={(value) => setCode(value || "")}
             />
             <button onClick={() => onSubmit(code)}>Submit</button>
         </div>
