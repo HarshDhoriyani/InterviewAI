@@ -8,6 +8,7 @@ import { useTimer } from "@/hooks/useTimer";
 import CodeEditor from "@/components/CodeEditor";
 import QuestionPanel from "@/components/QuestionPanel";
 import ResultPanel from "@/components/ResultPanel";
+import ExplanationBox from "@/components/ExplanationBox";
 
 interface Question {
   title: string;
@@ -78,6 +79,7 @@ export default function Interview() {
       <CodeEditor onSubmit={submitCode} />
 
       {result && <ResultPanel result={result} />}
+      {result && <ExplanationBox sessionId={sessionId} />}
 
       {/* Optional timer display */}
       <div className="col-span-2 text-center text-sm text-gray-500">
