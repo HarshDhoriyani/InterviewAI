@@ -5,6 +5,7 @@ const interviewRoutes = require("./routes/interview.routes");
 const evaluationRoutes = require("./routes/evaluation.routes");
 const analyticsRoutes = require("./routes/analytics.routes");
 const snapshotRoutes = require("./routes/snapshot.routes");
+const explanationRoutes = require("./routes/explanation.routes");
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/api/interview", interviewRoutes);
 app.use("/api/evaluation", evaluationRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/snapshot", snapshotRoutes);
+app.use("/api/explanation", explanationRoutes);
 
 
 module.exports = app;
