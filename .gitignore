@@ -7,6 +7,7 @@ Thumbs.db
 .env.*
 *.log
 logs/
+.hintrc
 
 ####################################
 # Node.js (Backend - server)
