@@ -9,8 +9,7 @@ export default function Login() {
     const router = useRouter();
 
     const login = async () => {
-        const res = await api("/auth/login", "POST", { email, password });
-        localStorage.setItem("token", res.token);
+        await api("/auth/login", "POST", { email, password });
         router.push("/interview");
     };
 

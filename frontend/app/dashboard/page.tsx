@@ -5,10 +5,9 @@ import { api } from "@/services/api";
 
 export default function Dashboard() {
     const [data, setData] = useState<any>(null);
-    const token = localStorage.getItem("token") || "";
 
     useEffect(() => {
-        api("/analytics", "GET", null, token).then(setData);
+        api("/analytics", "GET", null).then(setData);
     }, []);
 
     if (!data) {

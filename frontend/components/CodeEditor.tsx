@@ -5,7 +5,6 @@ import { api } from "@/services/api";
 
 export default function CodeEditor({ onSubmit, sessionId }: any) {
     const [code, setCode] = useState("");
-    const token = localStorage.getItem("token") || "";
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -14,7 +13,6 @@ export default function CodeEditor({ onSubmit, sessionId }: any) {
                     "/snapshot",
                     "POST",
                     { sessionId, code },
-                    token
                 );
             }
         }, 5000);

@@ -5,14 +5,12 @@ import { api } from "@/services/api";
 
 export default function ExplanationBox({ sessionId } : any) {
     const [text, setText] = useState("");
-    const token = localStorage.getItem("token") || "";
 
     const submitExplanation = async () => {
         const res = await api (
             "/explanation/submit",
             "POST",
             { sessionId, explanation: text },
-            token
         );
 
         alert(`Explanation Score: ${res.explanationScore}`);

@@ -28,7 +28,6 @@ export default function Interview() {
   const [result, setResult] = useState<Result | null>(null);
 
   const seconds = useTimer(); // hook inside component
-  const token = localStorage.getItem("token") || "";
 
   // Start interview
   const startInterview = useCallback(async () => {
@@ -36,12 +35,11 @@ export default function Interview() {
       "/interview/start",
       "POST",
       { difficulty: "easy" },
-      token
     );
 
     setQuestion(res.question);
     setSessionId(res.sessionId);
-  }, [token]);
+  }, []);
 
   // Submit code
   const submitCode = useCallback(
@@ -50,11 +48,10 @@ export default function Interview() {
         "/evaluation/submit",
         "POST",
         { sessionId, code, language: "javascript" },
-        token
       );
       setResult(res);
     },
-    [sessionId, token]
+    [sessionId]
   );
 
   // Start interview on mount
