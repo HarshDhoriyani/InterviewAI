@@ -1,0 +1,63 @@
+####################################
+# General
+####################################
+.DS_Store
+Thumbs.db
+.env
+*.log
+logs/
+.hintrc
+
+####################################
+# Node.js (Backend - server)
+####################################
+server/node_modules/
+server/npm-debug.log*
+server/yarn-debug.log*
+server/yarn-error.log*
+
+####################################
+# Python (if backend uses Python / FastAPI / Flask)
+####################################
+server/__pycache__/
+server/*.pyc
+server/*.pyo
+server/*.pyd
+server/venv/
+server/.venv/
+
+####################################
+# Frontend (React / Vite / Next / Angular)
+####################################
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.cache/
+frontend/.vite/
+
+####################################
+# Next.js specific
+####################################
+frontend/.next/
+frontend/out/
+
+####################################
+# Docker
+####################################
+**/Dockerfile.prod
+docker-data/
+*.pid
+
+####################################
+# IDE / Editor
+####################################
+.vscode/
+.idea/
+*.swp
+*.swo
+
+####################################
+# OS Generated
+####################################
+ehthumbs.db
+Icon?
