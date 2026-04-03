@@ -10,8 +10,6 @@ import type { User } from "@/services/api";
 interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
-  // isLoading = true until localStorage is read on the client.
-  // ALL auth guards must wait for isLoading === false before redirecting.
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
@@ -22,46 +20,57 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,      setUser]      = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // start TRUE — SSR has no localStorage
+  const [token,     setToken]     = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Runs once on client after hydration — the only safe place to read localStorage
   useEffect(() => {
     try {
-      const token  = localStorage.getItem("token");
-      const stored = localStorage.getItem("user");
-      if (token && stored) {
-        setUser(JSON.parse(stored) as User);
+      const storedToken = localStorage.getItem("token");
+      const storedUser  = localStorage.getItem("user");
+
+      if (storedToken) {
+        setToken(storedToken);
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch {
+            // user parse failed — token still valid, user will be null
+          }
+        }
       }
     } catch {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      // localStorage not available
     } finally {
-      setIsLoading(false); // ← guards may now run
+      setIsLoading(false);
     }
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const u = await authService.login(email, password);
-    setUser(u);
+    const { user, token } = await authService.login(email, password);
+    setUser(user);
+    setToken(token);
   }, []);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
-    const u = await authService.register(name, email, password);
+    const { user: u, token: t } = await authService.register(name, email, password);
     setUser(u);
+    setToken(t);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-    // Use replace so the back button doesn't return to a protected page
+    setToken(null);
     window.location.replace("/auth");
   }, []);
 
   return (
     <AuthContext.Provider value={{
       user,
-      isAuthenticated: !!user,
+      // ✅ Auth is based on TOKEN presence, not user object shape
+      // This means even if user JSON is malformed, auth still works
+      isAuthenticated: !!token,
       isLoading,
       login,
       register,

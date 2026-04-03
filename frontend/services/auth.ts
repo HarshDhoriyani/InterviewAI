@@ -1,27 +1,35 @@
-import { authAPI, type User, type AuthResponse } from "./api";
+import { authAPI, type User } from "./api";
 
 const TOKEN_KEY = "token";
-const USER_KEY  = "user";
+const USER_KEY = "user";
 
 export const authService = {
-  // POST /api/auth/register
-  async register(name: string, email: string, password: string): Promise<User> {
-    const { data } = await authAPI.register(name, email, password);
-    this._persist(data);
-    return data.user;
+  async login(email: string, password: string): Promise<{ user: User; token: string}> {
+    const { data } = await authAPI.login(email, password);
+
+    const token = data.token;
+    const user = data.user;
+
+    this._persist(token, user);
+
+    return { user, token };
   },
 
-  // POST /api/auth/login
-  async login(email: string, password: string): Promise<User> {
-    const { data } = await authAPI.login(email, password);
-    this._persist(data);
-    return data.user;
+  async register(name: string, email: string, password: string): Promise<{ user: User; token: string}> {
+    const { data } = await authAPI.register(name, email, password);
+
+    const token = data.token;
+    const user = data.user;
+
+    this._persist(token, user);
+
+    return { user, token };
   },
 
   logout() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    window.location.href = "/auth";
+    window.location.replace("/auth");
   },
 
   getToken(): string | null {
@@ -29,23 +37,19 @@ export const authService = {
     return localStorage.getItem(TOKEN_KEY);
   },
 
-  getUser(): User | null {
-    if (typeof window === "undefined") return null;
-    try {
-      const raw = localStorage.getItem(USER_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch {
-      return null;
-    }
+  _extractUser(data: any): User {
+    const u = data.user || data;
+    return {
+      _id: u._id || u.id || "",
+      name: u.name || "",
+      email: u.email || "",
+      createdAt: u.createdAt || new Date().toISOString(),
+    } as User;
   },
 
-  isAuthenticated(): boolean {
-    return !!this.getToken();
-  },
-
-  _persist(data: AuthResponse) {
-    localStorage.setItem(TOKEN_KEY, data.token);
-    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+  _persist(token: string, user: User) {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
   },
 };
 

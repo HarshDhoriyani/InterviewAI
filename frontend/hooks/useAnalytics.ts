@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { analyticsAPI, type AnalyticsResponse } from "@/services/api";
-import toast from "react-hot-toast";
 
 interface UseAnalyticsReturn {
   analytics: AnalyticsResponse | null;
@@ -21,9 +20,17 @@ export function useAnalytics(): UseAnalyticsReturn {
       const { data } = await analyticsAPI.get();
       setAnalytics(data);
     } catch (err: any) {
+      const status = err?.response?.status;
+
+      if (status === 404) {
+        setAnalytics(null);
+        setError(null);
+        return;
+      }
+
       const msg = err?.response?.data?.message || "Failed to load analytics";
       setError(msg);
-      // Don't toast on initial load failure — show inline error instead
+
       console.error("[Analytics]", msg);
     } finally {
       setIsLoading(false);

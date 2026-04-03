@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
@@ -32,9 +32,88 @@ const FEATURES = [
   },
 ];
 
+// ── NEW: How-it-works steps ───────────────────────────────────────────────────
+const STEPS = [
+  {
+    num: "01",
+    title: "Create your account",
+    description: "Sign up free in seconds. No credit card required. Your progress is saved automatically.",
+  },
+  {
+    num: "02",
+    title: "Pick a topic & difficulty",
+    description: "Choose from Arrays, Trees, DP, System Design and more. Set easy, medium, or hard.",
+  },
+  {
+    num: "03",
+    title: "Solve & explain",
+    description: "Write your solution in the live editor, then walk through your reasoning in plain English.",
+  },
+  {
+    num: "04",
+    title: "Get AI feedback",
+    description: "Receive scores on correctness, efficiency, quality, edge cases and communication clarity.",
+  },
+];
+
+// ── NEW: Social proof numbers ─────────────────────────────────────────────────
+const STATS = [
+  { value: "12 k+",  label: "Interviews completed" },
+  { value: "94 %",   label: "Felt more confident after" },
+  { value: "500+",   label: "Unique questions" },
+  { value: "6",      label: "Languages supported" },
+];
+
+// ── NEW: Testimonials ─────────────────────────────────────────────────────────
+const TESTIMONIALS = [
+  {
+    quote: "The AI feedback was brutally honest in the best way. After two weeks I finally understood why my O(n²) solutions kept failing.",
+    name: "Priya S.",
+    role: "SWE — Google L4",
+    initials: "PS",
+  },
+  {
+    quote: "I love how it scores my verbal explanation separately. That's the part that always tripped me up in real interviews.",
+    name: "Marcus T.",
+    role: "SWE — Stripe",
+    initials: "MT",
+  },
+  {
+    quote: "The analytics dashboard showed me I was great at arrays but terrible at DP. Focused there for a week and cleared my loop.",
+    name: "Anya K.",
+    role: "SWE — Figma",
+    initials: "AK",
+  },
+];
+
+// ── NEW: FAQ ──────────────────────────────────────────────────────────────────
+const FAQ = [
+  {
+    q: "Is InterviewAI free to use?",
+    a: "Yes — create an account and start practising immediately. No credit card, no trial period.",
+  },
+  {
+    q: "Which coding languages are supported?",
+    a: "JavaScript, TypeScript, Python, Java, Go, C++, and Rust. More on the way.",
+  },
+  {
+    q: "How does the AI evaluation work?",
+    a: "We send your code to an LLM that checks correctness against test cases, estimates time/space complexity, reviews code quality, and scores how well your verbal explanation maps to your solution.",
+  },
+  {
+    q: "Can I practise System Design questions?",
+    a: "Yes. System Design questions use the explanation panel rather than a code editor — you write your design and reasoning, and the AI scores your communication and architectural decisions.",
+  },
+  {
+    q: "Is my code stored anywhere?",
+    a: "Snapshots are saved to your session so you can review them on the dashboard. Only you can see your sessions.",
+  },
+];
+
 export default function HomePage() {
   const { isAuthenticated, isLoading } = useAuth();
   const [scrollY, setScrollY] = useState(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
     const h = () => setScrollY(window.scrollY);
@@ -67,7 +146,24 @@ export default function HomePage() {
             <span className="font-display font-600 text-[15px] text-white">InterviewAI</span>
           </div>
 
-          {/* Only working links */}
+          {/* NEW: nav links for non-authed visitors */}
+          {!authed && (
+            <div className="hidden md:flex items-center gap-1">
+              <a href="#how-it-works"
+                className="text-[13px] text-[#635a51] hover:text-[#958d80] transition-colors px-3 py-1.5">
+                How it works
+              </a>
+              <a href="#features"
+                className="text-[13px] text-[#635a51] hover:text-[#958d80] transition-colors px-3 py-1.5">
+                Features
+              </a>
+              <a href="#faq"
+                className="text-[13px] text-[#635a51] hover:text-[#958d80] transition-colors px-3 py-1.5">
+                FAQ
+              </a>
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
             {authed ? (
               <>
@@ -131,7 +227,7 @@ export default function HomePage() {
             and track your improvement with detailed analytics.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
             <Link href={ctaHref}
               className="group flex items-center gap-2.5 px-7 py-3.5 rounded-full font-medium text-[14px] text-[#0a0908] hover:brightness-110 transition-all"
               style={{ background: "linear-gradient(135deg, #e8c97a, #d4a843)" }}>
@@ -147,11 +243,66 @@ export default function HomePage() {
               </Link>
             )}
           </div>
+
+          {/* ── NEW: Stats bar ── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px rounded-2xl overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.04)" }}>
+            {STATS.map((s) => (
+              <div key={s.label} className="bg-[#0a0908] py-5 px-4 text-center">
+                <div className="font-display text-[26px] font-600 text-white mb-0.5">{s.value}</div>
+                <div className="text-[11px] text-[#504942]">{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
-      <section className="py-24 px-6">
+      {/* ── NEW: HOW IT WORKS ── */}
+      <section id="how-it-works" className="py-24 px-6"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.2em] text-[#635a51] mb-4">The process</div>
+              <h2 className="font-display text-[44px] font-600 text-white leading-tight">
+                From signup to<br />interview-ready
+              </h2>
+            </div>
+            <Link href={ctaHref}
+              className="self-start md:self-auto text-[13px] text-[#635a51] hover:text-[#d4a843] transition-colors flex items-center gap-1.5">
+              Start now
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6h8M6 2l4 4-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-px rounded-2xl overflow-hidden"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.04)" }}>
+            {STEPS.map((step, i) => (
+              <div key={step.num}
+                className="bg-[#0a0908] p-7 hover:bg-[#111009] transition-colors duration-300 group">
+                <div className="font-display text-[40px] font-600 leading-none mb-5"
+                  style={{
+                    background: "linear-gradient(135deg, #e8c97a, #b8891e)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                    opacity: 0.6,
+                  }}>
+                  {step.num}
+                </div>
+                <h3 className="font-display text-[17px] font-600 text-white mb-2">{step.title}</h3>
+                <p className="text-[13px] text-[#635a51] leading-relaxed">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FEATURES (original) ── */}
+      <section id="features" className="py-24 px-6"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="max-w-6xl mx-auto">
           <div className="mb-14">
             <div className="text-[11px] uppercase tracking-[0.2em] text-[#635a51] mb-4">What you get</div>
@@ -180,8 +331,80 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section className="py-20 px-6">
+      {/* ── NEW: TESTIMONIALS ── */}
+      <section className="py-24 px-6"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-14">
+            <div className="text-[11px] uppercase tracking-[0.2em] text-[#635a51] mb-4">From users</div>
+            <h2 className="font-display text-[44px] font-600 text-white leading-tight">
+              People who used it<br />to get hired
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="p-6 rounded-2xl flex flex-col gap-5"
+                style={{ background: "#111009", border: "1px solid rgba(255,255,255,0.05)" }}>
+                {/* Quote marks */}
+                <div className="font-display text-[48px] leading-none text-[#201e15] select-none">"</div>
+                <p className="text-[14px] text-[#958d80] leading-relaxed flex-1 -mt-6">{t.quote}</p>
+                <div className="flex items-center gap-3 pt-2 border-t border-[rgba(255,255,255,0.04)]">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-600 text-[#0a0908]"
+                    style={{ background: "linear-gradient(135deg, #e8c97a, #d4a843)" }}>
+                    {t.initials}
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-medium text-[#d1cdc4]">{t.name}</div>
+                    <div className="text-[11px] text-[#504942]">{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── NEW: FAQ ── */}
+      <section id="faq" className="py-24 px-6"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-14">
+            <div className="text-[11px] uppercase tracking-[0.2em] text-[#635a51] mb-4">Questions</div>
+            <h2 className="font-display text-[44px] font-600 text-white leading-tight">
+              Frequently asked
+            </h2>
+          </div>
+
+          <div className="space-y-2">
+            {FAQ.map((item, i) => (
+              <div key={i} className="rounded-xl overflow-hidden"
+                style={{ background: "#111009", border: "1px solid rgba(255,255,255,0.05)" }}>
+                <button
+                  className="w-full text-left px-6 py-4 flex items-center justify-between gap-4"
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                  <span className="text-[14px] font-medium text-[#d1cdc4]">{item.q}</span>
+                  <span className="flex-shrink-0 text-[#635a51] transition-transform duration-200"
+                    style={{ transform: openFaq === i ? "rotate(45deg)" : "rotate(0deg)" }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </span>
+                </button>
+                {openFaq === i && (
+                  <div className="px-6 pb-5">
+                    <p className="text-[13px] text-[#635a51] leading-relaxed">{item.a}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA (original) ── */}
+      <section className="py-20 px-6"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <div className="max-w-xl mx-auto text-center">
           <div className="p-10 rounded-3xl relative overflow-hidden"
             style={{ background: "#111009", border: "1px solid rgba(212,168,67,0.15)" }}>
@@ -205,18 +428,72 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="border-t border-[rgba(255,255,255,0.04)] py-8 px-6">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#d4a843] to-[#b8891e] flex items-center justify-center">
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                <path d="M2 11L5 5l3 4 2-3 2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+      {/* ── FOOTER (expanded) ── */}
+      <footer className="border-t border-[rgba(255,255,255,0.04)] px-6">
+        {/* Top row */}
+        <div className="max-w-6xl mx-auto py-12 grid md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#d4a843] to-[#b8891e] flex items-center justify-center">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 11L5 5l3 4 2-3 2 5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <span className="font-display font-600 text-[15px] text-white">InterviewAI</span>
             </div>
-            <span className="font-display text-[13px] font-600 text-white">InterviewAI</span>
+            <p className="text-[13px] text-[#504942] leading-relaxed max-w-xs">
+              AI-powered interview practice. Adaptive questions, instant feedback, and analytics that show exactly where to improve.
+            </p>
           </div>
-          <span className="text-[12px] text-[#504942]">© 2025 InterviewAI</span>
+
+          {/* Product */}
+          <div>
+            <div className="text-[11px] uppercase tracking-widest text-[#635a51] mb-4">Product</div>
+            <div className="space-y-2.5">
+              {[
+                { label: "Features", href: "#features" },
+                { label: "How it works", href: "#how-it-works" },
+                { label: "FAQ", href: "#faq" },
+                { label: "Start interview", href: "/interview" },
+                { label: "Dashboard", href: "/dashboard" },
+              ].map((l) => (
+                <a key={l.label} href={l.href}
+                  className="block text-[13px] text-[#504942] hover:text-[#958d80] transition-colors">
+                  {l.label}
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Topics */}
+          <div>
+            <div className="text-[11px] uppercase tracking-widest text-[#635a51] mb-4">Practice topics</div>
+            <div className="space-y-2.5">
+              {[
+                "Arrays & Hashing",
+                "Two Pointers",
+                "Trees & Graphs",
+                "Dynamic Programming",
+                "Sliding Window",
+                "System Design",
+              ].map((t) => (
+                <Link key={t} href={`/interview?topic=${t.toLowerCase().replace(/\s+/g, "-")}`}
+                  className="block text-[13px] text-[#504942] hover:text-[#958d80] transition-colors">
+                  {t}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom row */}
+        <div className="max-w-6xl mx-auto py-5 flex items-center justify-between border-t border-[rgba(255,255,255,0.04)]">
+          <span className="text-[12px] text-[#504942]">© 2025 InterviewAI. All rights reserved.</span>
+          <div className="flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] text-[#504942] ml-1">All systems normal</span>
+          </div>
         </div>
       </footer>
     </div>

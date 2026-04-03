@@ -9,8 +9,6 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 export const api = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: { "Content-Type": "application/json" },
-  // withCredentials must be false when backend CORS uses wildcard origin "*"
-  withCredentials: false,
 });
 
 // Attach JWT on every request

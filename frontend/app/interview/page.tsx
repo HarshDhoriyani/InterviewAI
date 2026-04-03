@@ -6,10 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useInterview } from "@/hooks/useInterview";
 import { useTimer } from "@/hooks/useTimer";
+import { useSpeech } from "@/hooks/useSpeech";
 import InterviewPanel from "@/components/InterviewPanel";
 import CodeEditor from "@/components/CodeEditor";
+import TranscriptPanel from "@/components/TranscriptPanel";
 import Timer from "@/components/Timer";
 import type { EvaluationResponse } from "@/services/api";
+import toast from "react-hot-toast";
 
 type Stage = "setup" | "active" | "results";
 
@@ -43,6 +46,9 @@ function InterviewFlow() {
   const [explanation, setExplanation] = useState("");
   const [layout,      setLayout]      = useState<"split" | "code">("split");
 
+  // NEW: track whether speech panel is open in the active stage
+  const [speechOpen,  setSpeechOpen]  = useState(false);
+
   const {
     session, question, evaluation, explanationResult,
     isStarting, isSubmittingCode, isSubmittingExplanation,
@@ -51,15 +57,32 @@ function InterviewFlow() {
 
   const { time, isRunning, start, pause } = useTimer();
 
-  // ── Auth guard — wait for isLoading before redirecting ──────────────────
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) router.replace("/auth");
-  }, [authLoading, isAuthenticated, router]);
+  // NEW: speech hook for live narration during active interview
+  const { isRecording, transcript, isSupported, toggleRecording, clearTranscript } = useSpeech();
 
+  // Auth guard
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) window.location.replace("/auth");
+  }, [authLoading, isAuthenticated]);
+
+  // Timer management
   useEffect(() => {
     if (stage === "active") start();
     else pause();
   }, [stage]);
+
+  // NEW: keyboard shortcut — Ctrl/Cmd+Enter submits code
+  useEffect(() => {
+    if (stage !== "active") return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (code.trim() && !isSubmittingCode) handleSubmitCode();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [stage, code, isSubmittingCode]);
 
   if (authLoading) {
     return (
@@ -77,15 +100,38 @@ function InterviewFlow() {
 
   const handleSubmitCode = async () => {
     if (!code.trim()) return;
+    // If speech was recording, stop it first
+    if (isRecording) toggleRecording();
     const result = await submitCode(code, language);
-    if (result) setStage("results");
+    if (result) {
+      // Pre-fill explanation from speech transcript if available
+      if (transcript.trim()) setExplanation(transcript.trim());
+      setStage("results");
+    }
   };
 
   const handleReset = () => {
     reset();
+    clearTranscript();
     setCode("");
     setExplanation("");
+    setSpeechOpen(false);
     setStage("setup");
+  };
+
+  // NEW: copy score to clipboard
+  const handleCopyScore = () => {
+    if (!evaluation) return;
+    const text = [
+      `InterviewAI Result`,
+      `Total: ${evaluation.totalScore}/100`,
+      `Correctness: ${evaluation.correctnessScore}`,
+      `Efficiency: ${evaluation.efficiencyScore}`,
+      `Quality: ${evaluation.qualityScore}`,
+      `Edge Cases: ${evaluation.edgeCaseScore}`,
+      `Complexity: ${evaluation.estimatedComplexity}`,
+    ].join("\n");
+    navigator.clipboard.writeText(text).then(() => toast.success("Score copied!"));
   };
 
   // ── SETUP ─────────────────────────────────────────────────────────────────
@@ -169,6 +215,15 @@ function InterviewFlow() {
               </div>
             </div>
 
+            {/* NEW: reminder hint */}
+            <div className="flex items-start gap-2.5 px-4 py-3 rounded-xl"
+              style={{ background: "rgba(212,168,67,0.05)", border: "1px solid rgba(212,168,67,0.1)" }}>
+              <span className="text-[14px] flex-shrink-0">💡</span>
+              <p className="text-[12px] text-[#635a51] leading-relaxed">
+                During the interview you can narrate your thinking with the mic button — your speech will pre-fill the explanation box when you submit.
+              </p>
+            </div>
+
             <button onClick={handleStart} disabled={isStarting}
               className="w-full py-3.5 rounded-xl font-medium text-[14px] text-[#0a0908] flex items-center justify-center gap-2.5 hover:brightness-110 transition-all disabled:opacity-50"
               style={{ background: "linear-gradient(135deg, #e8c97a, #d4a843)" }}>
@@ -207,9 +262,25 @@ function InterviewFlow() {
                 {evaluation.totalScore}
               </div>
               <div className="text-[13px] text-[#635a51]">Total Score / 100</div>
+
+              {/* NEW: score label */}
+              <div className="mt-3 inline-block px-3 py-1 rounded-full text-[12px] font-medium"
+                style={{
+                  background: evaluation.totalScore >= 80
+                    ? "rgba(52,211,153,0.1)" : evaluation.totalScore >= 60
+                    ? "rgba(212,168,67,0.1)" : "rgba(248,113,113,0.1)",
+                  color: evaluation.totalScore >= 80 ? "#34d399"
+                       : evaluation.totalScore >= 60 ? "#d4a843" : "#f87171",
+                  border: `1px solid ${evaluation.totalScore >= 80 ? "rgba(52,211,153,0.25)"
+                    : evaluation.totalScore >= 60 ? "rgba(212,168,67,0.25)" : "rgba(248,113,113,0.25)"}`,
+                }}>
+                {evaluation.totalScore >= 80 ? "Strong pass 🎉"
+                  : evaluation.totalScore >= 60 ? "Borderline — review feedback"
+                  : "Needs work — check the tips below"}
+              </div>
             </div>
 
-            {/* Score breakdown */}
+            {/* Score breakdown (unchanged) */}
             <div className="grid grid-cols-2 gap-3 mb-5">
               {[
                 { label: "Correctness",  value: evaluation.correctnessScore },
@@ -231,21 +302,21 @@ function InterviewFlow() {
               ))}
             </div>
 
-            {/* Complexity */}
+            {/* Complexity (unchanged) */}
             <div className="p-3 rounded-xl mb-4"
               style={{ background: "rgba(212,168,67,0.05)", border: "1px solid rgba(212,168,67,0.12)" }}>
               <div className="text-[10px] text-[#635a51] uppercase tracking-wide mb-1">Complexity</div>
               <div className="font-mono text-[13px] text-[#d4a843]">{evaluation.estimatedComplexity}</div>
             </div>
 
-            {/* Feedback */}
+            {/* Feedback (unchanged) */}
             <div className="p-4 rounded-xl mb-5"
               style={{ background: "#18160f", border: "1px solid rgba(255,255,255,0.04)" }}>
               <div className="text-[10px] text-[#635a51] uppercase tracking-wide mb-2">AI Feedback</div>
               <p className="text-[13px] text-[#958d80] leading-relaxed">{evaluation.feedback}</p>
             </div>
 
-            {/* Explanation */}
+            {/* Explanation (unchanged) */}
             {!explanationResult ? (
               <div>
                 <label className="block text-[11px] uppercase tracking-widest text-[#635a51] mb-2">
@@ -260,6 +331,12 @@ function InterviewFlow() {
                     minHeight: "80px",
                     fontFamily: "var(--font-sora)",
                   }} />
+                {/* NEW: show speech hint if transcript was captured */}
+                {transcript.trim() && explanation === transcript.trim() && (
+                  <p className="text-[11px] text-[#635a51] mt-1.5">
+                    ✓ Pre-filled from your narration — edit freely
+                  </p>
+                )}
                 <button onClick={() => submitExplanation(explanation)}
                   disabled={!explanation.trim() || isSubmittingExplanation}
                   className="mt-2 w-full py-2.5 rounded-xl text-[13px] font-medium text-[#d4a843] border border-[rgba(212,168,67,0.25)] hover:bg-[rgba(212,168,67,0.08)] disabled:opacity-40 transition-all">
@@ -283,6 +360,16 @@ function InterviewFlow() {
               className="flex-1 py-3 rounded-xl text-[13px] font-medium text-[#958d80] border border-[rgba(255,255,255,0.08)] hover:border-[rgba(255,255,255,0.12)] transition-all">
               Try Another
             </button>
+            {/* NEW: copy score button */}
+            <button onClick={handleCopyScore}
+              className="px-4 py-3 rounded-xl text-[13px] font-medium text-[#635a51] border border-[rgba(255,255,255,0.08)] hover:text-[#d4a843] hover:border-[rgba(212,168,67,0.25)] transition-all"
+              title="Copy score to clipboard">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect x="1" y="4" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                <path d="M4 4V2.5A1.5 1.5 0 015.5 1h7A1.5 1.5 0 0114 2.5v7A1.5 1.5 0 0112.5 11H11"
+                  stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              </svg>
+            </button>
             <Link href="/dashboard"
               className="flex-1 py-3 rounded-xl text-[13px] font-medium text-[#0a0908] text-center hover:brightness-110 transition-all"
               style={{ background: "linear-gradient(135deg, #e8c97a, #d4a843)" }}>
@@ -297,6 +384,7 @@ function InterviewFlow() {
   // ── ACTIVE INTERVIEW ──────────────────────────────────────────────────────
   return (
     <div className="h-screen bg-[#0a0908] text-[#d1cdc4] flex flex-col overflow-hidden">
+
       {/* Top bar */}
       <header className="h-12 border-b border-[rgba(255,255,255,0.04)] flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -328,6 +416,33 @@ function InterviewFlow() {
         <div className="flex items-center gap-2">
           <Timer time={time} isRunning={isRunning} onToggle={isRunning ? pause : start} />
 
+          {/* NEW: mic toggle button */}
+          {isSupported && (
+            <button onClick={() => { toggleRecording(); if (!speechOpen) setSpeechOpen(true); }}
+              title={isRecording ? "Stop narration" : "Narrate your thinking"}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all"
+              style={{
+                background: isRecording ? "rgba(239,68,68,0.08)" : "#18160f",
+                borderColor: isRecording ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.06)",
+              }}>
+              {isRecording ? (
+                <>
+                  <span className="recording-dot" style={{ width: 6, height: 6 }} />
+                  <span className="text-[11px] text-red-400 font-medium">Recording</span>
+                </>
+              ) : (
+                <>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="text-[#635a51]">
+                    <rect x="4" y="1" width="4" height="7" rx="2" stroke="currentColor" strokeWidth="1.2"/>
+                    <path d="M2 6c0 2.21 1.79 4 4 4s4-1.79 4-4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    <path d="M6 10v1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-[11px] text-[#635a51]">Narrate</span>
+                </>
+              )}
+            </button>
+          )}
+
           <div className="flex items-center gap-1 p-1 rounded-lg" style={{ background: "#18160f" }}>
             {(["split", "code"] as const).map((l) => (
               <button key={l} onClick={() => setLayout(l)}
@@ -341,6 +456,7 @@ function InterviewFlow() {
 
           <button onClick={handleSubmitCode}
             disabled={!code.trim() || isSubmittingCode}
+            title="Submit (⌘ Enter)"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#0a0908] disabled:opacity-50 hover:brightness-110 transition-all"
             style={{ background: "linear-gradient(135deg, #e8c97a, #d4a843)" }}>
             {isSubmittingCode
@@ -358,12 +474,31 @@ function InterviewFlow() {
             <InterviewPanel question={question} />
           </div>
         )}
-        <div className={layout === "split" ? "w-1/2" : "flex-1"}>
-          <CodeEditor
-            sessionId={session?._id || null}
-            starterCode={question?.starterCode || ""}
-            onCodeChange={(c, l) => { setCode(c); setLanguage(l); }}
-          />
+        <div className={`${layout === "split" ? "w-1/2" : "flex-1"} flex flex-col overflow-hidden`}>
+          <div className="flex-1 overflow-hidden">
+            <CodeEditor
+              sessionId={session?._id || null}
+              starterCode={question?.starterCode || ""}
+              onCodeChange={(c, l) => { setCode(c); setLanguage(l); }}
+            />
+          </div>
+          {/* NEW: live transcript panel — shown only when speech panel is open */}
+          {speechOpen && (
+            <div className="flex-shrink-0">
+              <TranscriptPanel transcript={transcript} isLive={isRecording} />
+              {/* close/clear strip */}
+              <div className="flex items-center justify-between px-4 py-2 bg-[#0d0c08] border-t border-[rgba(255,255,255,0.04)]">
+                <button onClick={clearTranscript}
+                  className="text-[11px] text-[#504942] hover:text-[#635a51] transition-colors">
+                  Clear transcript
+                </button>
+                <button onClick={() => setSpeechOpen(false)}
+                  className="text-[11px] text-[#504942] hover:text-[#635a51] transition-colors">
+                  Hide
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -375,10 +510,14 @@ function InterviewFlow() {
           <span className="text-[10px] text-[#504942]">{isConnected ? "Connected" : "Offline"}</span>
         </div>
         {session && (
-          <span className="text-[10px] text-[#504942] font-mono ml-auto">
+          <span className="text-[10px] text-[#504942] font-mono">
             Session · {session._id.slice(-6)}
           </span>
         )}
+        {/* NEW: keyboard shortcut hint */}
+        <span className="text-[10px] text-[#504942] ml-auto hidden sm:block">
+          ⌘ Enter to submit
+        </span>
       </div>
     </div>
   );
