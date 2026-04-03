@@ -5,6 +5,8 @@ const Session = require("../models/Session");
 // Start Interview
 exports.startInterview = async (req, res) => {
   try {
+    const userId = req.user.id;
+
     const { difficulty } = req.body;
 
     const question = await Question.findOne({ difficulty });
