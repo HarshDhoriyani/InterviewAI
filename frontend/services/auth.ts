@@ -53,4 +53,8 @@ export const authService = {
   },
 };
 
+export const getAuthHeaders = () => ({
+  Authorization: `Bearer ${authService.getToken()}`
+});
+
 export default authService;

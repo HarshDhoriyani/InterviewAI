@@ -5,7 +5,10 @@ const Session = require("../models/Session");
 // Start Interview
 exports.startInterview = async (req, res) => {
   try {
-    const userId = req.user.id;
+
+    console.log("REQ USER:", req.user);
+    
+    const userId = req.user._id;
 
     const { difficulty } = req.body;
 
@@ -16,7 +19,7 @@ exports.startInterview = async (req, res) => {
     }
 
     const session = await Session.create({
-      user: req.user._id,
+      user: userId,
       question: question._id,
       difficulty: question.difficulty,
       topic: question.topic,

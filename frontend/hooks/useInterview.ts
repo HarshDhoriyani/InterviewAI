@@ -50,6 +50,7 @@ export function useInterview(): UseInterviewReturn {
       setSession(data.session);
       setQuestion(data.question);
       sessionRef.current = data.session;
+      localStorage.setItem("sessionId", data.session._id);
       setEvaluation(null);
       setExplanationResult(null);
 
@@ -86,8 +87,11 @@ export function useInterview(): UseInterviewReturn {
     code: string,
     language: string
   ): Promise<EvaluationResponse | null> => {
-    const sid = sessionRef.current?._id;
-    if (!sid) { toast.error("No active session"); return null; }
+    const sid = sessionRef.current?._id || localStorage.getItem("sessionId");
+    if (!sid) {
+      toast.error("No active sessions");
+      return null;
+    }
 
     setIsSubmittingCode(true);
     try {
@@ -112,8 +116,11 @@ export function useInterview(): UseInterviewReturn {
   const submitExplanation = useCallback(async (
     explanation: string
   ): Promise<ExplanationResponse | null> => {
-    const sid = sessionRef.current?._id;
-    if (!sid) { toast.error("No active session"); return null; }
+    const sid = sessionRef.current?._id || localStorage.getItem("sessionId");
+    if (!sid) {
+      toast.error("No active sessions");
+      return null;
+    }
 
     setIsSubmittingExp(true);
     try {
@@ -138,6 +145,8 @@ export function useInterview(): UseInterviewReturn {
     setExplanationResult(null);
     setIsConnected(false);
     sessionRef.current = null;
+
+    localStorage.removeItem("sessionId");
   }, []);
 
   return {
