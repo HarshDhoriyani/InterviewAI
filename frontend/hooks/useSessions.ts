@@ -72,9 +72,12 @@ export function useSessions(): UseSessionsReturn {
             setSessions(data.sessions || []);
         }
         catch (err: any) {
-            const msg = err?.response?.data?.message || "Failed to load sessions";
+            console.error("[SESSIONS ERROR]", err?.response || err);
+
+            const msg = err?.response?.data?.message || err?.message || "Failed to load sessions";
+
             setError(msg);
-            console.error("[Sessions]", msg);
+            
         }
         finally {
             setIsLoading(false);
