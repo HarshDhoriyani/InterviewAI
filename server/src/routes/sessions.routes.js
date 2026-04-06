@@ -4,7 +4,7 @@ const protect = require("../utils/authMiddleware");
 const { getSessions } = require("../controllers/sessions.controller");
 const { getUserProfile } = require("../controllers/sessions.controller");
 
-router.get("/sessions", protect, getUserProfile);
+router.get("/", protect, getSessions);
 router.get("/profile", protect, getUserProfile);
 
 
